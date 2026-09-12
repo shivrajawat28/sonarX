@@ -1,0 +1,21 @@
+[project]
+name = "mlpipeline"
+version = "0.1.0"
+description = "Python ML pipeline (the brain) for Marine Debris Sonar AI — HTTP-free"
+requires-python = ">=3.11"
+dependencies = [
+  "numpy",
+  "opencv-python-headless",
+  "pyyaml",
+  "pandas",
+  "pydantic>=2",
+]
+
+[project.optional-dependencies]
+# Real model training/inference (OPEN decision #5: final architecture).
+# The stub detector path deliberately does not require these.
+ml = ["torch", "torchvision", "ultralytics"]
+serve = ["onnxruntime"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

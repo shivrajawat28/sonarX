@@ -1,0 +1,37 @@
+# Baseline sonar preprocessing chain (Section 7.2 defaults).
+# Ops run in listed order. Every op is config-selected — none applied "by default"
+# without evidence (ADR-003). Experimental variants live in experiments/.
+name: baseline_sonar
+description: >
+  MVP chain: robust intensity normalization + CLAHE contrast, letterboxed to model
+  input. Denoising left disabled until measured on real data (Section 7.2).
+ops:
+  - op: normalize_intensity
+    enabled: true
+    params:
+      low_percentile: 1.0
+      high_percentile: 99.0
+  - op: clahe
+    enabled: true
+    params:
+      clip_limit: 2.0
+      tile_grid_size: [8, 8]
+  - op: denoise_median
+    enabled: false
+    params:
+      kernel: 3
+  - op: denoise_nlm
+    enabled: false
+    params:
+      h: 10
+      template_window_size: 7
+      search_window_size: 21
+  - op: resize_letterbox
+    enabled: true
+    params:
+      target_size: [640, 640]
+      pad_value: 0
+  - op: optional_flip_waterfall
+    enabled: false
+    params:
+      flip_horizontal: false   # OPEN decision #2 — depends on reader orientation

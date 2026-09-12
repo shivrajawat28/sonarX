@@ -1,0 +1,29 @@
+# Demo deployment (Section 19). Local dev does NOT need Docker:
+#   make dev   -> uvicorn :8000 + vite :5173 with proxy
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/backend.Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      # CORS: allow the frontend origin(s)
+      CORS_ORIGINS: "http://localhost:3000,http://localhost:5173"
+      DATA_ROOT: /srv/data
+      MODELS_DIR: /srv/models
+    volumes:
+      - backend-data:/srv/data        # uploads/artifacts/reports/exports/db
+      - ./models:/srv/models:ro       # registry + weights mounted read-only
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/frontend.Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  backend-data:

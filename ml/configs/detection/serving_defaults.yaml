@@ -1,0 +1,8 @@
+# Detector/post-processing serving defaults (Section 8).
+# NOTE: no class names here, ever — classes come from the model's class_map.
+# Per-request threshold overrides are bounded by backend settings.
+name: serving_defaults
+description: MVP thresholds; tune only via evaluation evidence, never per demo.
+confidence_threshold: 0.25
+iou_threshold: 0.45
+max_detections: 300

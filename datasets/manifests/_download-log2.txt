@@ -1,0 +1,47 @@
+
+### ai4shipwrecks ###############################################
+   attempt 1 failed: HTTPError: HTTP Error 403: Forbidden
+   retrying in 2s ...
+   attempt 2 failed: HTTPError: HTTP Error 403: Forbidden
+   retrying in 4s ...
+   attempt 3 failed: HTTPError: HTTP Error 403: Forbidden
+   retrying in 8s ...
+   attempt 4 failed: HTTPError: HTTP Error 403: Forbidden
+   retrying in 16s ...
+   attempt 5 failed: HTTPError: HTTP Error 403: Forbidden
+!! ai4shipwrecks FAILED: RuntimeError: could not complete download: https://deepblue.lib.umich.edu/data/downloads/db78tc698
+
+### ghostvision #################################################
+   attempt 1: GhostVision_DatasetAndModels.zip from byte 0 of 898,783,834
+   attempt 1 failed: ConnectionResetError: [WinError 10054] An existing connection was forcibly closed by the remote host
+   retrying in 2s ...
+   attempt 2: GhostVision_DatasetAndModels.zip from byte 463,470,592 of 898,783,834
+   attempt 2 failed: ConnectionResetError: [WinError 10054] An existing connection was forcibly closed by the remote host
+   retrying in 4s ...
+   attempt 3 failed: URLError: <urlopen error [Errno 11001] getaddrinfo failed>
+   retrying in 8s ...
+   attempt 4 failed: URLError: <urlopen error [Errno 11001] getaddrinfo failed>
+   retrying in 16s ...
+   attempt 5 failed: URLError: <urlopen error [Errno 11001] getaddrinfo failed>
+!! ghostvision FAILED: RuntimeError: could not complete download: https://zenodo.org/api/records/20056679/files/GhostVision_DatasetAndModels.zip/content
+
+### kaggle-sss ##################################################
+   attempt 1 failed: URLError: <urlopen error [Errno 11001] getaddrinfo failed>
+   retrying in 2s ...
+   attempt 2 failed: URLError: <urlopen error [Errno 11001] getaddrinfo failed>
+   retrying in 4s ...
+   attempt 3 failed: URLError: <urlopen error [Errno 11001] getaddrinfo failed>
+   branch 'master' not available, trying next ...
+   attempt 1 failed: URLError: <urlopen error [Errno 11001] getaddrinfo failed>
+   retrying in 2s ...
+   attempt 2 failed: URLError: <urlopen error [Errno 11001] getaddrinfo failed>
+   retrying in 4s ...
+   attempt 3 failed: URLError: <urlopen error [Errno 11001] getaddrinfo failed>
+   branch 'main' not available, trying next ...
+!! kaggle-sss FAILED: RuntimeError: SeabedObjects GitHub download failed on all branches
+
+================================================================
+FAILED datasets:
+  - ai4shipwrecks: RuntimeError: could not complete download: https://deepblue.lib.umich.edu/data/downloads/db78tc698
+  - ghostvision: RuntimeError: could not complete download: https://zenodo.org/api/records/20056679/files/GhostVision_DatasetAndModels.zip/content
+  - kaggle-sss: RuntimeError: SeabedObjects GitHub download failed on all branches

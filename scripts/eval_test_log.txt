@@ -1,0 +1,8 @@
+eval run eval_drishti-ss_yolov8n_e5_interim_test_20260911_113824 saved to C:\Users\kr034\OneDrive\Desktop\SONAR\SONAR\models\eval
+  model=drishti-ss_yolov8n_e5_interim split=test seed=42
+  precision=0.764 recall=0.437 f1=0.556
+  [submarine_pipeline] P=0.988 R=0.971 F1=0.980 AP50=0.953 support=174
+  [shipwreck] P=0.632 R=0.173 F1=0.272 AP50=0.210 support=525
+  [ghost_net] P=0.945 R=1.000 F1=0.972 AP50=1.000 support=120
+  [mine_cylinder] P=0.189 R=0.171 F1=0.179 AP50=0.039 support=82
+NOTE: numbers reflect the model+dataset above only — no generalization claims.

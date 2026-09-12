@@ -1,0 +1,29 @@
+{
+  "name": "sonar-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5",
+    "leaflet": "^1.9",
+    "react": "^18",
+    "react-dom": "^18",
+    "react-leaflet": "^4",
+    "react-router-dom": "^6"
+  },
+  "devDependencies": {
+    "@types/leaflet": "^1.9",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "@vitejs/plugin-react": "^4",
+    "playwright": "^1.63.0",
+    "typescript": "^5",
+    "vite": "^5"
+  }
+}

@@ -1,0 +1,19 @@
+# DRISHTI-SSS dataset configuration
+# Source: https://huggingface.co/datasets/rehan9599/drishti-sss
+# License: CC-BY-SA-4.0
+# Note: Data is already preprocessed (Lee speckle + CLAHE). Do NOT re-apply.
+name: drishti-sss
+root: datasets/processed/drishti-sss
+format: yolo
+candidate_classes:
+  - submarine_pipeline
+  - shipwreck
+  - ghost_net
+  - mine_cylinder
+split_seed: 42
+notes: >
+  Primary training dataset. 5,205 images across 3 real classes + 1 synthetic
+  (ghost_net). Already preprocessed with Lee speckle filter + CLAHE.
+  Do not apply additional contrast enhancement. Ships with pre-defined
+  train/val/test splits used as-is. Class IDs remapped from DRISHTI's
+  {1,2,3,4} (excl. crab_pot=0) to our {0,1,2,3}.

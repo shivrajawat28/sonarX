@@ -1,0 +1,15 @@
+# Experiment: CLAHE only (no normalization first) — compare against baseline
+# via evaluation runs on the same model + dataset (Section 7.3 methodology).
+name: exp01-clahe-only
+description: Isolates CLAHE contribution; compare EvaluationRun metrics vs baseline_sonar.
+ops:
+  - op: clahe
+    enabled: true
+    params:
+      clip_limit: 2.0
+      tile_grid_size: [8, 8]
+  - op: resize_letterbox
+    enabled: true
+    params:
+      target_size: [640, 640]
+      pad_value: 0

@@ -1,0 +1,58 @@
+{
+  "eval_run_id": "eval_drishti-ss_yolov8n_e5_interim_test_20260911_113824",
+  "model_version": "drishti-ss_yolov8n_e5_interim",
+  "dataset_ref": {
+    "path": "datasets/manifests/drishti-sss.json",
+    "sha256": "4f4f2bf02b48223f8d5104abb82dc41b441fd4d9fc0fcdbfb3026d4ba298caa9"
+  },
+  "split": "test",
+  "split_seed": 42,
+  "preprocess_config_hash": "2dffbb41abb4bc9c0db24f888f7c3d183e1db03274f14d06d231595d7b57df59",
+  "filter_config_hash": null,
+  "filter_enabled": false,
+  "metrics": {
+    "mAP50": 0.5505917091805014,
+    "mAP50_95": null,
+    "precision": 0.7635658914728682,
+    "recall": 0.43729189789123196,
+    "f1": 0.5561044460127029
+  },
+  "per_class": {
+    "submarine_pipeline": {
+      "ap50": 0.953039809299213,
+      "precision": 0.9883040935672515,
+      "recall": 0.9712643678160919,
+      "f1": 0.9797101449275362,
+      "support": 174
+    },
+    "shipwreck": {
+      "ap50": 0.21000081828544104,
+      "precision": 0.6319444444444444,
+      "recall": 0.17333333333333334,
+      "f1": 0.27204783258594917,
+      "support": 525
+    },
+    "ghost_net": {
+      "ap50": 1.0,
+      "precision": 0.9448818897637795,
+      "recall": 1.0,
+      "f1": 0.97165991902834,
+      "support": 120
+    },
+    "mine_cylinder": {
+      "ap50": 0.03932620913735152,
+      "precision": 0.1891891891891892,
+      "recall": 0.17073170731707318,
+      "f1": 0.17948717948717952,
+      "support": 82
+    }
+  },
+  "confusion_matrix_ref": null,
+  "pr_curve_refs": [],
+  "failure_case_refs": [],
+  "hyperparameters": {
+    "iou_match": 0.5
+  },
+  "notes": "Interim e5 checkpoint, test split, filter OFF. Re-run adding macro-mAP50.",
+  "timestamp": "2026-09-11T11:38:24+00:00"
+}

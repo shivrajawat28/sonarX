@@ -1,0 +1,158 @@
+{
+  "models": [
+    {
+      "model_version": "stub-demo-v1",
+      "architecture_family": "stub",
+      "framework": "numpy",
+      "checkpoint_path": "models/weights/stub-demo-v1/stub_checkpoint.json",
+      "input_size": [
+        640,
+        640
+      ],
+      "class_map": {
+        "0": "synthetic_target_a",
+        "1": "synthetic_target_b"
+      },
+      "preprocess_config_ref": {
+        "path": "ml/configs/preprocessing/baseline_sonar.yaml",
+        "sha256": "15b1774452aefd7eaffa7cc6eb0535b821bee895fa4b28a04bee28e41d55be95"
+      },
+      "train_dataset_ref": null,
+      "train_config": {},
+      "best_eval_ref": null,
+      "status": "retired",
+      "notes": "DEMO FIXTURE: StubDetector on synthetic patterns \u2014 not a trained sonar model.",
+      "created_at": "2026-09-09T16:20:30+00:00"
+    },
+    {
+      "model_version": "drishti-ss_yolov8n_smoke_e5",
+      "architecture_family": "yolo",
+      "framework": "pytorch",
+      "checkpoint_path": "models/weights/drishti-ss_yolov8n_smoke/best.pt",
+      "input_size": [
+        640,
+        640
+      ],
+      "class_map": {
+        "0": "submarine_pipeline",
+        "1": "shipwreck",
+        "2": "ghost_net",
+        "3": "mine_cylinder"
+      },
+      "preprocess_config_ref": {
+        "path": "ml/configs/preprocessing/drishti_preprocessed.yaml",
+        "sha256": "2dffbb41abb4bc9c0db24f888f7c3d183e1db03274f14d06d231595d7b57df59"
+      },
+      "train_dataset_ref": {
+        "path": "datasets/processed/drishti-ss-smoke/data.yaml",
+        "sha256": ""
+      },
+      "train_config": {
+        "base_model": "yolov8n.pt",
+        "epochs": 5,
+        "batch": 8,
+        "imgsz": 640,
+        "seed": 42,
+        "device": "cpu",
+        "note": "SMOKE TEST on 60-image subset. Replace with full-trained model."
+      },
+      "best_eval_ref": null,
+      "status": "retired",
+      "notes": "YOLOv8n trained on 60-image smoke subset of DRISHTI-SSS (5 epochs). DO NOT present as production model. placeholder for pipeline validation.",
+      "created_at": "2026-09-10T19:18:25.142207+00:00"
+    },
+    {
+      "model_version": "drishti-ss_yolov8n_e5_interim",
+      "architecture_family": "yolo",
+      "framework": "pytorch",
+      "checkpoint_path": "models/weights/drishti-ss_yolov8n_e30/weights/best.pt",
+      "input_size": [
+        640,
+        640
+      ],
+      "class_map": {
+        "0": "submarine_pipeline",
+        "1": "shipwreck",
+        "2": "ghost_net",
+        "3": "mine_cylinder"
+      },
+      "preprocess_config_ref": {
+        "path": "ml/configs/preprocessing/drishti_preprocessed.yaml",
+        "sha256": "2dffbb41abb4bc9c0db24f888f7c3d183e1db03274f14d06d231595d7b57df59"
+      },
+      "train_dataset_ref": {
+        "path": "datasets/processed/drishti-sss/data.yaml",
+        "sha256": "653ed2c9994064647ab899f12bc4a24ade0976dd237d3467e7845395d3e7d003"
+      },
+      "train_config": {
+        "dataset": "datasets/processed/drishti-sss/data.yaml"
+      },
+      "best_eval_ref": null,
+      "status": "retired",
+      "notes": "REAL trained YOLOv8n on DRISHTI-SSS full train split (3875 imgs, 5 epochs, CPU). Interim model while 30-epoch run completes. Val: P=0.604 R=0.601 mAP50=0.585 mAP50-95=0.413 (ultralytics val, split=val).",
+      "created_at": "2026-09-11T08:35:21+00:00"
+    },
+    {
+      "model_version": "drishti-ss_yolov8n_e11_snapshot",
+      "architecture_family": "yolo",
+      "framework": "pytorch",
+      "checkpoint_path": "models/weights/drishti-ss_yolov8n_e30/weights/best_snapshot_ep11.pt",
+      "input_size": [
+        640,
+        640
+      ],
+      "class_map": {
+        "0": "submarine_pipeline",
+        "1": "shipwreck",
+        "2": "ghost_net",
+        "3": "mine_cylinder"
+      },
+      "preprocess_config_ref": {
+        "path": "ml/configs/preprocessing/drishti_preprocessed.yaml",
+        "sha256": "2dffbb41abb4bc9c0db24f888f7c3d183e1db03274f14d06d231595d7b57df59"
+      },
+      "train_dataset_ref": {
+        "path": "datasets/processed/drishti-sss/data.yaml",
+        "sha256": "653ed2c9994064647ab899f12bc4a24ade0976dd237d3467e7845395d3e7d003"
+      },
+      "train_config": {
+        "dataset": "datasets/processed/drishti-sss/data.yaml"
+      },
+      "best_eval_ref": null,
+      "status": "retired",
+      "notes": "FROZEN snapshot of the in-progress e30 run's best.pt (best val fitness through ~epoch 11). Registered because the interim entry pointed at the live best.pt, which kept changing during training. Test eval (filter OFF) recorded 2026-09-11: P=0.764 R=0.437 F1=0.556.",
+      "created_at": "2026-09-11T11:42:10+00:00"
+    },
+    {
+      "model_version": "drishti-ss_yolov8n_e30_final",
+      "architecture_family": "yolo",
+      "framework": "pytorch",
+      "checkpoint_path": "models/weights/drishti-ss_yolov8n_e30/weights/best_final.pt",
+      "input_size": [
+        640,
+        640
+      ],
+      "class_map": {
+        "0": "submarine_pipeline",
+        "1": "shipwreck",
+        "2": "ghost_net",
+        "3": "mine_cylinder"
+      },
+      "preprocess_config_ref": {
+        "path": "ml/configs/preprocessing/drishti_preprocessed.yaml",
+        "sha256": "2dffbb41abb4bc9c0db24f888f7c3d183e1db03274f14d06d231595d7b57df59"
+      },
+      "train_dataset_ref": {
+        "path": "datasets/processed/drishti-sss/data.yaml",
+        "sha256": "653ed2c9994064647ab899f12bc4a24ade0976dd237d3467e7845395d3e7d003"
+      },
+      "train_config": {
+        "dataset": "datasets/processed/drishti-sss/data.yaml"
+      },
+      "best_eval_ref": null,
+      "status": "active",
+      "notes": "YOLOv8n, target 30 epochs (single-instance resumed run) on DRISHTI-SSS train split; 30/30 epochs recorded; CPU. COMPLETE run.",
+      "created_at": "2026-09-11T16:35:57+00:00"
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+:root {
+  --bg: #0e1116;
+  --panel: #161b23;
+  --border: #2a313c;
+  --text: #e6e9ee;
+  --muted: #9aa4b2;
+  --accent: #2f81f7;
+  --ok: #2ea043;
+  --warn: #d29922;
+  --bad: #f85149;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
+  font-size: 14px;
+}
+
+h1 { font-size: 1.3rem; margin: 0 0 0.5rem; }
+h2 { font-size: 1.05rem; margin: 0 0 0.5rem; }
+a { color: var(--accent); text-decoration: none; }
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.muted { color: var(--muted); }
+.row { display: flex; gap: 1rem; flex-wrap: wrap; }
+.grow { flex: 1 1 340px; }
+
+button {
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+button.secondary { background: var(--border); }
+
+.error-box {
+  background: rgba(248, 81, 73, 0.12);
+  border: 1px solid var(--bad);
+  border-radius: 6px;
+  padding: 0.6rem 0.8rem;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+
+.badge {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 0.1rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.badge.accepted { background: rgba(46, 160, 67, 0.2); color: var(--ok); }
+.badge.flagged { background: rgba(210, 153, 34, 0.2); color: var(--warn); }
+.badge.rejected { background: rgba(248, 81, 73, 0.2); color: var(--bad); }
+
+table { border-collapse: collapse; width: 100%; font-size: 0.85rem; }
+th, td { border-bottom: 1px solid var(--border); padding: 0.4rem 0.5rem; text-align: left; }
+th { color: var(--muted); font-weight: 600; }
+
+/* Leaflet needs an explicit height */
+.leaflet-container { height: 360px; border-radius: 8px; }

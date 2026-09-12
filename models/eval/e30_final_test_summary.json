@@ -1,0 +1,8 @@
+{
+  "model_version": "drishti-ss_yolov8n_e30_final",
+  "split": "test",
+  "precision": 0.7136,
+  "recall": 0.7049,
+  "mAP50": 0.6985,
+  "mAP50-95": 0.5182
+}

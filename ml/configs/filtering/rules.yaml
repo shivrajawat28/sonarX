@@ -1,0 +1,43 @@
+# False-positive filter configuration (Section 9.4).
+# Rules are toggled/parameterized here — never in code. Penalty caps are per rule;
+# the scorer subtracts penalties from model_confidence (never below 0).
+# shadow_ratio stays experimental until real dataset evidence exists (OPEN: evidence).
+name: rules_baseline
+description: >
+  MVP rule set: size, aspect ratio, edge clipping, intensity outlier.
+  Deterministic, explainable; filtering annotates, never deletes (ADR-006/007).
+enabled_rules:
+  - rule: min_size
+    enabled: true
+    params:
+      min_area_frac: 0.0004   # fraction of source image area
+    penalty: 0.15
+  - rule: aspect_ratio
+    enabled: true
+    params:
+      max_ratio: 8.0
+    penalty: 0.10
+  - rule: edge_clip
+    enabled: true
+    params:
+      tolerance_px: 2
+    penalty: 0.30
+  - rule: intensity_outlier
+    enabled: true
+    params:
+      percentile_band: [10, 90]  # region must have some contrast vs image band
+      min_contrast: 0.02
+    penalty: 0.10
+  - rule: shadow_ratio
+    enabled: false             # OPEN — unproven until dataset review
+    params:
+      dark_percentile: 15
+      min_shadow_frac: 0.05
+    penalty: 0.10
+  - rule: class_specific
+    enabled: false             # populated after classes are finalized (OPEN #1)
+    params: {}
+    penalty: 0.0
+policy:
+  accept_threshold: 0.60   # final_confidence >= accept -> accepted
+  flag_threshold: 0.35     # flag <= final < accept -> flagged; below -> rejected (kept, marked)

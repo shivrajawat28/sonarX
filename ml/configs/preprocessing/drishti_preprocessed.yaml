@@ -1,0 +1,39 @@
+# Preprocessing config for DRISHTI-SSS data.
+# CRITICAL: This data has ALREADY been through Lee speckle + CLAHE.
+# We only need to resize to model input size. Do NOT re-apply CLAHE or denoising.
+name: drishti_preprocessed
+description: >
+  Minimal preprocessing for DRISHTI-SSS data that already underwent
+  Lee speckle filter + CLAHE (clip 3.0, 8x8 grid, 7x7 Lee kernel).
+  Only resize to model input dimensions. Re-applying CLAHE would
+  double-enhance and distort the imagery.
+ops:
+  - op: normalize_intensity
+    enabled: false
+    params:
+      low_percentile: 1.0
+      high_percentile: 99.0
+  - op: clahe
+    enabled: false
+    params:
+      clip_limit: 2.0
+      tile_grid_size: [8, 8]
+  - op: denoise_median
+    enabled: false
+    params:
+      kernel: 3
+  - op: denoise_nlm
+    enabled: false
+    params:
+      h: 10
+      template_window_size: 7
+      search_window_size: 21
+  - op: resize_letterbox
+    enabled: true
+    params:
+      target_size: [640, 640]
+      pad_value: 0
+  - op: optional_flip_waterfall
+    enabled: false
+    params:
+      flip_horizontal: false
