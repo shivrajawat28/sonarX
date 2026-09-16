@@ -3,15 +3,13 @@
 services:
   - type: web
     name: sonarx-backend
-    env: python
+    env: docker
+    dockerfilePath: Dockerfile
     region: oregon
-    plan: standard
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "PYTHONPATH='ml:.' uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT"
+    plan: free
     healthCheckPath: /health
+    autoDeploy: true
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.9
       - key: PYTHONPATH
         value: "ml:."
       - key: CORS_ORIGINS
