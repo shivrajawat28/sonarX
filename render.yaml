@@ -1,5 +1,5 @@
-# Render Blueprint for SONARX (AI-Powered Underwater Intelligence)
-# Supports full PyTorch + YOLOv8n inference and Vite frontend
+# Render Blueprint for SONARX Backend (AI-Powered Underwater Intelligence)
+# PyTorch + YOLOv8n inference on Render Free Docker Tier
 services:
   - type: web
     name: sonarx-backend
@@ -20,24 +20,3 @@ services:
         value: "0.25"
       - key: DEVICE
         value: cpu
-
-  - type: web
-    name: sonarx-frontend
-    env: static
-    region: oregon
-    buildCommand: "cd frontend && npm install && npm run build"
-    staticPublishPath: "./frontend/dist"
-    headers:
-      - path: /*
-        name: Cache-Control
-        value: no-cache
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
-    envVars:
-      - key: VITE_API_BASE_URL
-        fromService:
-          type: web
-          name: sonarx-backend
-          property: host
