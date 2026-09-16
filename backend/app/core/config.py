@@ -46,7 +46,7 @@ class Settings(BaseSettings):
     # --- uploads / security ---
     max_upload_mb: int = 100
     allowed_extensions: str = "png,tif,tiff,jpg,jpeg,zip"
-    cors_origins: str = "http://localhost:5173"
+    cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
 
     # --- persistence / jobs ---
     mongodb_enabled: bool = False

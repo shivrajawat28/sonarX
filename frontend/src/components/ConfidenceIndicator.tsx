@@ -7,18 +7,57 @@ const STATUS_CLASS: Record<string, string> = {
 };
 
 /**
- * Model confidence (raw detector output, NOT a probability of correctness) vs
- * final confidence (after rule-based filtering) — distinction from ADR-006.
+ * Model confidence (raw detector output) vs final confidence (after rule-based filtering).
+ * Dual progress line visualization with distinct status badges.
  */
 export default function ConfidenceIndicator({ detection }: { detection: Detection }) {
-  const pct = (v: number) => `${Math.round(v * 100)}%`;
+  const modelPct = detection.model_confidence * 100;
+  const finalPct = detection.final_confidence * 100;
+
+  const getBarColor = (pct: number) => {
+    if (pct >= 70) return "#10b981";
+    if (pct >= 40) return "#f59e0b";
+    return "#ef4444";
+  };
+
   return (
-    <span title={`filter reasons: ${detection.filter_reasons.join("; ") || "none"}`}>
-      <span className={`badge ${STATUS_CLASS[detection.filtering_status] ?? ""}`}>
-        {detection.filtering_status}
-      </span>{" "}
-      <span className="muted">model</span> {pct(detection.model_confidence)} ·{" "}
-      <span className="muted">final</span> {pct(detection.final_confidence)}
-    </span>
+    <div
+      className="confidence-bar-wrapper"
+      title={`Filter reasons: ${detection.filter_reasons.join("; ") || "none"}`}
+    >
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.2rem" }}>
+        <span className={`badge ${STATUS_CLASS[detection.filtering_status] ?? ""}`}>
+          {detection.filtering_status}
+        </span>
+      </div>
+
+      {/* Model Confidence Progress Line */}
+      <div className="confidence-row">
+        <span className="muted" style={{ fontSize: "0.72rem", width: 44 }}>raw</span>
+        <div className="progress-track">
+          <div
+            className="progress-fill"
+            style={{ width: `${Math.min(100, modelPct)}%`, background: getBarColor(modelPct) }}
+          />
+        </div>
+        <span className="mono" style={{ fontSize: "0.76rem", fontWeight: 600, width: 48, textAlign: "right" }}>
+          {modelPct.toFixed(1)}%
+        </span>
+      </div>
+
+      {/* Final Confidence Progress Line */}
+      <div className="confidence-row">
+        <span className="muted" style={{ fontSize: "0.72rem", width: 44 }}>final</span>
+        <div className="progress-track">
+          <div
+            className="progress-fill"
+            style={{ width: `${Math.min(100, finalPct)}%`, background: getBarColor(finalPct) }}
+          />
+        </div>
+        <span className="mono" style={{ fontSize: "0.76rem", fontWeight: 600, width: 48, textAlign: "right" }}>
+          {finalPct.toFixed(1)}%
+        </span>
+      </div>
+    </div>
   );
 }

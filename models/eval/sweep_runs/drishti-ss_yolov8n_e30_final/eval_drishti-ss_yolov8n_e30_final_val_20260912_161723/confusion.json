@@ -1,0 +1,26 @@
+{
+  "submarine_pipeline": {
+    "submarine_pipeline": 151,
+    "shipwreck": 0,
+    "ghost_net": 0,
+    "mine_cylinder": 0
+  },
+  "shipwreck": {
+    "submarine_pipeline": 0,
+    "shipwreck": 646,
+    "ghost_net": 0,
+    "mine_cylinder": 0
+  },
+  "ghost_net": {
+    "submarine_pipeline": 0,
+    "shipwreck": 0,
+    "ghost_net": 120,
+    "mine_cylinder": 0
+  },
+  "mine_cylinder": {
+    "submarine_pipeline": 0,
+    "shipwreck": 0,
+    "ghost_net": 0,
+    "mine_cylinder": 153
+  }
+}

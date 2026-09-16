@@ -33,6 +33,17 @@ class YOLODetector:
         self._meta: ModelMeta | None = None
         self._model = None
         self._entry = None
+        # Test-time augmentation. Off by default: it roughly doubles inference
+        # cost, so it is opt-in and measured (see docs/EVALUATION.md).
+        self._tta = False
+
+    def set_tta(self, enabled: bool) -> None:
+        """Enable/disable multi-scale+flip test-time augmentation."""
+        self._tta = bool(enabled)
+
+    @property
+    def tta(self) -> bool:
+        return self._tta
 
     def load(self, model_version: str) -> ModelMeta:
         try:
@@ -95,6 +106,7 @@ class YOLODetector:
                 conf=cfg.confidence_threshold,
                 iou=cfg.iou_threshold,
                 max_det=cfg.max_detections,
+                augment=self._tta,  # TTA: averaged multi-scale/flip inference
                 verbose=False,
                 device=None,  # framework default; backend sets DEVICE env globally
             )

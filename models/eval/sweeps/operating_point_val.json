@@ -1,0 +1,170 @@
+[
+  {
+    "split": "val",
+    "confidence_threshold": 0.25,
+    "tta": false,
+    "overall": {
+      "precision": 0.7343957503320053,
+      "recall": 0.6117256637168141,
+      "f1": 0.6674713337356669,
+      "mAP50": 0.6915933195426645
+    },
+    "per_class": {
+      "submarine_pipeline": {
+        "precision": 0.98,
+        "recall": 1.0,
+        "f1": 0.98989898989899,
+        "ap50": 0.9917674435144381,
+        "support": 147
+      },
+      "shipwreck": {
+        "precision": 0.5876777251184834,
+        "recall": 0.45588235294117646,
+        "f1": 0.5134575569358178,
+        "ap50": 0.4249709315543894,
+        "support": 544
+      },
+      "ghost_net": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "ap50": 1.0,
+        "support": 120
+      },
+      "mine_cylinder": {
+        "precision": 0.6229508196721312,
+        "recall": 0.40860215053763443,
+        "f1": 0.49350649350649345,
+        "ap50": 0.34963490310183004,
+        "support": 93
+      }
+    },
+    "eval_run_id": "eval_drishti-ss_yolov8n_e30_final_val_20260912_161603"
+  },
+  {
+    "split": "val",
+    "confidence_threshold": 0.15,
+    "tta": false,
+    "overall": {
+      "precision": 0.6303879310344828,
+      "recall": 0.6471238938053098,
+      "f1": 0.638646288209607,
+      "mAP50": 0.7084352960012681
+    },
+    "per_class": {
+      "submarine_pipeline": {
+        "precision": 0.98,
+        "recall": 1.0,
+        "f1": 0.98989898989899,
+        "ap50": 0.9917674435144381,
+        "support": 147
+      },
+      "shipwreck": {
+        "precision": 0.4981751824817518,
+        "recall": 0.5018382352941176,
+        "f1": 0.5,
+        "ap50": 0.4512006171349718,
+        "support": 544
+      },
+      "ghost_net": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "ap50": 1.0,
+        "support": 120
+      },
+      "mine_cylinder": {
+        "precision": 0.4090909090909091,
+        "recall": 0.4838709677419355,
+        "f1": 0.4433497536945813,
+        "ap50": 0.3907731233556626,
+        "support": 93
+      }
+    },
+    "eval_run_id": "eval_drishti-ss_yolov8n_e30_final_val_20260912_161645"
+  },
+  {
+    "split": "val",
+    "confidence_threshold": 0.1,
+    "tta": false,
+    "overall": {
+      "precision": 0.5710280373831775,
+      "recall": 0.6758849557522124,
+      "f1": 0.6190476190476191,
+      "mAP50": 0.7226589834149928
+    },
+    "per_class": {
+      "submarine_pipeline": {
+        "precision": 0.9735099337748344,
+        "recall": 1.0,
+        "f1": 0.9865771812080537,
+        "ap50": 0.9917674435144381,
+        "support": 147
+      },
+      "shipwreck": {
+        "precision": 0.4473684210526316,
+        "recall": 0.53125,
+        "f1": 0.4857142857142857,
+        "ap50": 0.4678699278149061,
+        "support": 544
+      },
+      "ghost_net": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "ap50": 1.0,
+        "support": 120
+      },
+      "mine_cylinder": {
+        "precision": 0.35947712418300654,
+        "recall": 0.5913978494623656,
+        "f1": 0.4471544715447155,
+        "ap50": 0.43099856233062717,
+        "support": 93
+      }
+    },
+    "eval_run_id": "eval_drishti-ss_yolov8n_e30_final_val_20260912_161723"
+  },
+  {
+    "split": "val",
+    "confidence_threshold": 0.05,
+    "tta": false,
+    "overall": {
+      "precision": 0.45878136200716846,
+      "recall": 0.7079646017699115,
+      "f1": 0.5567638103523271,
+      "mAP50": 0.7340736078357035
+    },
+    "per_class": {
+      "submarine_pipeline": {
+        "precision": 0.9671052631578947,
+        "recall": 1.0,
+        "f1": 0.9832775919732442,
+        "ap50": 0.9917674435144381,
+        "support": 147
+      },
+      "shipwreck": {
+        "precision": 0.35469107551487417,
+        "recall": 0.5698529411764706,
+        "f1": 0.43723554301833567,
+        "ap50": 0.4900163120869589,
+        "support": 544
+      },
+      "ghost_net": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "ap50": 1.0,
+        "support": 120
+      },
+      "mine_cylinder": {
+        "precision": 0.25301204819277107,
+        "recall": 0.6774193548387096,
+        "f1": 0.368421052631579,
+        "ap50": 0.45451067574141724,
+        "support": 93
+      }
+    },
+    "eval_run_id": "eval_drishti-ss_yolov8n_e30_final_val_20260912_161801"
+  }
+]

@@ -195,15 +195,27 @@ class JobService:
             model_versions = sorted({d.get("model_version") for d in detections if d.get("model_version")})
             pp_hashes = sorted({(d.get("preprocess_config_hash") or "")[:16] for d in detections if d.get("preprocess_config_hash")})
             filter_hashes = sorted({(d.get("filter_config_hash") or "")[:16] for d in detections if d.get("filter_config_hash")})
+            # Detector operating point actually applied (post backend floor), read
+            # back from the runs that produced these detections. A report at 0.05
+            # is a different review load from one at 0.25, so it belongs in the
+            # artifact; it is never inferred from the request.
+            runs_by_id = {r["run_id"]: r for r in self.repo.list_all("detection_runs")[0]}
+            thresholds = sorted({
+                t for t in (
+                    runs_by_id.get(d.get("run_id"), {}).get("applied_confidence_threshold")
+                    for d in detections
+                ) if t is not None
+            })
 
             meta_block = {
                 "model_versions": model_versions,
                 "pp_hashes": pp_hashes,
                 "filter_hashes": filter_hashes,
+                "thresholds": thresholds,
                 "kind": kind,
             }
             html = self._render_html(
-                title=f"Detection Report — {survey_id or run_id}",
+                title=f"SONARX Detection Report — {survey_id or run_id}",
                 rows=detections, counts=n, image_count=len(image_ids),
                 meta=meta_block,
             )
@@ -213,7 +225,7 @@ class JobService:
             # Dual-format: HTML (browser-friendly) + PDF (print/archive). Both
             # carry identical content. PDF via fpdf2 (pure-python, no system deps).
             pdf_bytes = self._render_pdf(
-                title=f"Detection Report — {survey_id or run_id}",
+                title=f"SONARX Detection Report — {survey_id or run_id}",
                 rows=detections, counts=n, image_count=len(image_ids), meta=meta_block,
             )
             artifact_pdf = self.storage.save_artifact(
@@ -279,6 +291,10 @@ class JobService:
         pdf.cell(0, 5, f"Preprocessing config (sha256/16): {', '.join(meta.get('pp_hashes') or []) or '-'}",
                  new_x="LMARGIN", new_y="NEXT")
         pdf.cell(0, 5, f"Filter config (sha256/16): {', '.join(meta.get('filter_hashes') or []) or '-'}",
+                 new_x="LMARGIN", new_y="NEXT")
+        pdf.cell(0, 5,
+                 f"Detector confidence threshold: "
+                 f"{', '.join(str(t) for t in (meta.get('thresholds') or [])) or '-'}",
                  new_x="LMARGIN", new_y="NEXT")
         pdf.ln(3)
 
@@ -373,6 +389,7 @@ _REPORT_TEMPLATE = """<!doctype html>
   Model: {{ meta.model_versions|join(', ') or '—' }} ·
   Preprocessing config: {{ meta.pp_hashes|join(', ') or '—' }}… ·
   Filter config: {{ meta.filter_hashes|join(', ') or '—' }}… ·
+  Detector confidence threshold: {{ meta.thresholds|join(', ') or '—' }} ·
   Report kind: {{ meta.kind }}
 </p>
 {% endif %}

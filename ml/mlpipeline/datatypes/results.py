@@ -29,6 +29,9 @@ class InferenceResult(BaseModel):
     preprocess_config_name: str | None = None
     filter_config_hash: str | None = None
     overrides_applied: dict = Field(default_factory=dict)
+    # Threshold the pipeline ACTUALLY used (post-resolution, incl. backend floor).
+    # Distinct from any requested override so the run is self-describing.
+    applied_confidence_threshold: float | None = None
     detections: list[Detection] = Field(default_factory=list)
     timings_ms: StageTimings = Field(default_factory=StageTimings)
     warnings: list[str] = Field(default_factory=list)
@@ -47,6 +50,7 @@ class DetectionRun(BaseModel):
     preprocess_config_hash: str
     filter_config_hash: str | None = None
     overrides_applied: dict = Field(default_factory=dict)
+    applied_confidence_threshold: float | None = None
     detection_ids: list[str] = Field(default_factory=list)
     image_ids: list[str] = Field(default_factory=list)  # for survey batches
     timings_ms: StageTimings = Field(default_factory=StageTimings)

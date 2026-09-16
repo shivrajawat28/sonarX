@@ -48,6 +48,10 @@ async def upload_image(request: Request, file: UploadFile = File(...)) -> dict:
     img = cv2.imdecode(np.frombuffer(data, dtype=np.uint8), cv2.IMREAD_UNCHANGED)
     if img is None:
         raise InvalidImageError("uploaded file is not a decodable image")
+    if img.shape[0] > 10000 or img.shape[1] > 10000 or (img.shape[0] * img.shape[1]) > 50_000_000:
+        raise InvalidImageError(
+            f"image dimensions {img.shape[1]}x{img.shape[0]} exceed safety limits (max 10000x10000 px)"
+        )
 
     stored = service.storage.save_upload(data, safe_name)
     sha = stored["sha256"]
@@ -105,9 +109,18 @@ async def upload_survey(
 
         raise CorruptSonarDataError("survey archive is not a valid zip") from e
 
+    total_uncompressed = sum(zinfo.file_size for zinfo in zf.infolist())
+    if total_uncompressed > settings.max_upload_bytes * 5:
+        from backend.app.core.errors import CorruptSonarDataError
+
+        raise CorruptSonarDataError(
+            f"survey archive uncompressed size ({total_uncompressed} bytes) exceeds safety limit"
+        )
+
     # Security: reject path-traversal entries before extraction
     for member in zf.namelist():
-        if member.startswith("/") or ".." in Path(member).parts:
+        p_parts = Path(member).parts
+        if member.startswith(("/", "\\")) or ".." in p_parts or (len(p_parts) > 0 and ":" in p_parts[0]):
             from backend.app.core.errors import CorruptSonarDataError
 
             raise CorruptSonarDataError(f"unsafe archive entry: {member}")

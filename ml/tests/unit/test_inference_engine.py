@@ -194,6 +194,71 @@ class TestTrainEvalRegisterChain:
             store.save(run)
 
 
+class TestOperatingPointOverride:
+    """Regression: a per-request confidence override must reach post-processing.
+
+    The detector surfaces candidates below the default threshold, but the
+    post-processor separately re-applies a confidence threshold. Passing the
+    engine's DEFAULT config there discarded every recovered candidate, so the
+    override was silently a no-op: identical output at 0.25 and at 0.05. The
+    fix resolves one effective config and gives it to BOTH stages.
+
+    The stub detector emits fixed scores 0.55/0.63/0.71/0.79, so this is a
+    deterministic proof that the resolved threshold (not the default) governs
+    post-processing.
+    """
+
+    def _engine_with_default(self, default_threshold: float):
+        cfg, h = load_config_file(Path("ml/configs/preprocessing/baseline_sonar.yaml"), PreprocessConfig)
+        cfg = cfg.model_copy(deep=True)
+        for op in cfg.ops:
+            if op.op == "resize_letterbox":
+                op.params = {"target_size": [128, 128]}
+        eng = SonarInferenceEngine(
+            detector_kind="stub", registry=ModelRegistry(Path("/tmp/none.json")),
+            preprocess_config=cfg, preprocess_hash=h, run_filtering=False,
+            detection_config=DetectionConfig(confidence_threshold=default_threshold, iou_threshold=0.45),
+        )
+        eng.load("stub-e2e-v1")
+        return eng
+
+    def _image(self):
+        img = np.zeros((64, 64), dtype=np.uint8)
+        img[10:30, 10:30] = 200
+        img[40:60, 40:60] = 255
+        return img
+
+    def test_override_below_default_actually_surfaces_candidates(self):
+        from mlpipeline.detection.base import PredictParams
+
+        eng = self._engine_with_default(0.75)
+        default = eng.run_array(self._image())
+        lowered = eng.run_array(self._image(), params=PredictParams(confidence_threshold=0.5))
+
+        # Without the fix these were identical: the post-processor re-applied 0.75.
+        assert len(lowered.detections) > len(default.detections), (
+            "override produced no extra detections — it is being discarded by "
+            "post-processing (the engine must pass the RESOLVED config there)"
+        )
+        assert min(d.model_confidence for d in lowered.detections) < 0.75
+        assert all(d.model_confidence >= 0.5 for d in lowered.detections)
+
+    def test_applied_threshold_is_reported(self):
+        from mlpipeline.detection.base import PredictParams
+
+        eng = self._engine_with_default(0.75)
+        r = eng.run_array(self._image(), params=PredictParams(confidence_threshold=0.5))
+        # The run must state the threshold it actually used, not merely the default.
+        assert r.applied_confidence_threshold == 0.5
+        assert r.overrides_applied == {"confidence_threshold": 0.5}
+
+    def test_no_override_uses_and_reports_the_default(self):
+        eng = self._engine_with_default(0.75)
+        r = eng.run_array(self._image())
+        assert r.applied_confidence_threshold == 0.75
+        assert r.overrides_applied == {}
+
+
 class TestPredictImageCLI:
     def test_cli_produces_result_json(self, tmp_path: Path):
         import cv2

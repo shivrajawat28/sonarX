@@ -1,0 +1,37 @@
+{
+  "submarine_pipeline": {
+    "submarine_pipeline": 171,
+    "shipwreck": 0,
+    "ghost_net": 0,
+    "mine_cylinder": 0,
+    "missed": 3
+  },
+  "shipwreck": {
+    "submarine_pipeline": 0,
+    "shipwreck": 209,
+    "ghost_net": 0,
+    "mine_cylinder": 0,
+    "missed": 316
+  },
+  "ghost_net": {
+    "submarine_pipeline": 0,
+    "shipwreck": 0,
+    "ghost_net": 120,
+    "mine_cylinder": 0,
+    "missed": 0
+  },
+  "mine_cylinder": {
+    "submarine_pipeline": 0,
+    "shipwreck": 0,
+    "ghost_net": 0,
+    "mine_cylinder": 28,
+    "missed": 54
+  },
+  "background": {
+    "submarine_pipeline": 1,
+    "shipwreck": 134,
+    "ghost_net": 0,
+    "mine_cylinder": 34,
+    "missed": 0
+  }
+}

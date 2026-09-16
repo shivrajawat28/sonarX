@@ -2,11 +2,20 @@
 
 Single-process assumption is explicit and documented (Section 19.4). Writes are
 atomic (tmp + replace) so a crash cannot corrupt a collection file.
+
+Concurrency note: background jobs (survey batches, reports) update these files
+from a worker thread while request handlers read them. Reads therefore take the
+same lock as writes — without it a reader can open a collection file at the exact
+moment another thread's `os.replace` swaps it, which on Windows raises
+`PermissionError` (CPython opens files without FILE_SHARE_DELETE) and surfaced as
+an HTTP 500 on `GET /jobs/{id}`. Transient external locks (OneDrive, antivirus,
+search indexers) are retried briefly rather than failing the request.
 """
 from __future__ import annotations
 
 import json
 import threading
+import time
 from pathlib import Path
 from typing import Any
 
@@ -15,12 +24,18 @@ from backend.app.core.config import Settings
 COLLECTIONS = ("surveys", "sonar_images", "detection_runs", "detections",
                "model_versions", "evaluation_runs", "reports", "jobs")
 
+# Bounded retry for transient Windows sharing violations.
+_LOCK_RETRIES = 6
+_LOCK_RETRY_BASE_DELAY = 0.03  # seconds; linear backoff
+
 
 class FileRepository:
     def __init__(self, settings: Settings) -> None:
         self.db_dir = settings.db_dir
         self.db_dir.mkdir(parents=True, exist_ok=True)
-        self._lock = threading.Lock()
+        # Re-entrant on purpose: the public methods hold the lock and then call
+        # _read/_write, which take it again. A plain Lock would deadlock there.
+        self._lock = threading.RLock()
 
     def _path(self, collection: str) -> Path:
         if collection not in COLLECTIONS:
@@ -29,18 +44,36 @@ class FileRepository:
 
     def _read(self, collection: str) -> dict[str, dict[str, Any]]:
         p = self._path(collection)
-        if not p.is_file():
-            return {}
-        try:
-            return json.loads(p.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError) as e:
-            raise RuntimeError(f"collection '{collection}' unreadable: {e}") from e
+        with self._lock:
+            for attempt in range(_LOCK_RETRIES):
+                try:
+                    if not p.is_file():
+                        return {}
+                    return json.loads(p.read_text(encoding="utf-8"))
+                except FileNotFoundError:
+                    return {}
+                except PermissionError as e:
+                    if attempt == _LOCK_RETRIES - 1:
+                        raise RuntimeError(f"collection '{collection}' unreadable: {e}") from e
+                    time.sleep(_LOCK_RETRY_BASE_DELAY * (attempt + 1))
+                except (json.JSONDecodeError, OSError) as e:
+                    raise RuntimeError(f"collection '{collection}' unreadable: {e}") from e
+        return {}  # unreachable; keeps type checkers happy
 
     def _write(self, collection: str, docs: dict[str, dict[str, Any]]) -> None:
         p = self._path(collection)
         tmp = p.with_suffix(".tmp")
-        tmp.write_text(json.dumps(docs, indent=2), encoding="utf-8")
-        tmp.replace(p)
+        payload = json.dumps(docs, indent=2)
+        with self._lock:
+            for attempt in range(_LOCK_RETRIES):
+                try:
+                    tmp.write_text(payload, encoding="utf-8")
+                    tmp.replace(p)
+                    return
+                except PermissionError as e:
+                    if attempt == _LOCK_RETRIES - 1:
+                        raise RuntimeError(f"collection '{collection}' unwritable: {e}") from e
+                    time.sleep(_LOCK_RETRY_BASE_DELAY * (attempt + 1))
 
     # -- Repository protocol -------------------------------------------------
     def insert(self, collection: str, doc: dict[str, Any]) -> dict[str, Any]:

@@ -23,6 +23,8 @@ import sys
 import urllib.request
 from pathlib import Path
 
+import cv2
+
 ROOT = Path(__file__).resolve().parents[1]
 BASE = "http://localhost:8000/api/v1"
 TEST_IMGS = ROOT / "datasets/processed/drishti-sss/test/images"
@@ -110,14 +112,28 @@ def main() -> int:
             failures.append(f"{name}: served model {model_version} != {ACTIVE}")
 
         # GT check (bbox scaling + class)
+        #
+        # YOLO labels are normalised, so they must be denormalised by the REAL
+        # image size. Tiles are mixed-size (only ~47.5% are 640x640), so a
+        # hardcoded 640 produced ground-truth boxes in the wrong pixel frame for
+        # every non-square tile and made these IoU numbers meaningless.
         lbl = TEST_LBL / (img.stem + ".txt")
         gts = []
+        frame = None
         if lbl.is_file():
+            im = cv2.imread(str(img), cv2.IMREAD_UNCHANGED)
+            if im is None:
+                failures.append(f"{name}: could not decode for GT check")
+                continue
+            ih, iw = im.shape[0], im.shape[1]
+            frame = f"{iw}x{ih}"
             for line in lbl.read_text().splitlines():
                 p = line.split()
                 if len(p) >= 5:
                     cx, cy, w, h = map(float, p[1:5])
-                    gts.append((cx * 640 - w * 320, cy * 640 - h * 320, w * 640, h * 640, int(p[0])))
+                    gts.append(
+                        (cx * iw - w * iw / 2, cy * ih - h * ih / 2, w * iw, h * ih, int(p[0]))
+                    )
 
         pred_boxes = []
         for d in detections:
@@ -140,6 +156,7 @@ def main() -> int:
 
         if gts:
             names = {0: "submarine_pipeline", 1: "shipwreck", 2: "ghost_net", 3: "mine_cylinder"}
+            print(f"   frame: {frame} (GT denormalised by real size)")
             best = 0.0
             for g in gts:
                 for p in pred_boxes:

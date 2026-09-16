@@ -22,7 +22,34 @@ from mlpipeline.evaluation.metrics import (
     precision_recall_f1,
 )
 from mlpipeline.registry.eval_runs import EvalRunStore, get_eval_store
-from mlpipeline.registry.models import ModelRegistry, get_registry, resolve_repo_path
+from mlpipeline.registry.models import ModelRegistry, get_registry, repo_root, resolve_repo_path
+
+
+def portable_ref_path(path: str | Path) -> str:
+    """Reference path for a stored artifact ref, repo-relative when possible.
+
+    EvaluationRun records are Git-tracked, so an absolute path would leak the
+    registering machine's local layout (`C:/Users/<name>/...`) into the repo and
+    would dangle as soon as the repository is moved or cloned elsewhere — the
+    same defect class fixed for registry entries (see `resolve_repo_path`).
+    Paths outside the repo are left as given rather than silently rewritten.
+    """
+    p = Path(path)
+    if not p.is_absolute():
+        return p.as_posix()
+    try:
+        return p.resolve().relative_to(repo_root()).as_posix()
+    except (ValueError, OSError):
+        pass
+    # Absolute path from another checkout (the path does not exist here):
+    # recover the longest existing repo-relative suffix, exactly as
+    # `resolve_repo_path` does for registry entries.
+    parts = p.parts
+    for i in range(1, len(parts)):
+        candidate = repo_root().joinpath(*parts[i:])
+        if candidate.exists():
+            return candidate.relative_to(repo_root()).as_posix()
+    return str(path)
 
 
 def load_ground_truth(manifest: DatasetManifest, root: Path, split: str) -> dict[str, list[tuple[str, BBox]]]:
@@ -73,12 +100,23 @@ def evaluate_model(
     registry: ModelRegistry | None = None,
     store: EvalRunStore | None = None,
     notes: str = "",
+    confidence_threshold: float | None = None,
+    tta: bool = False,
 ) -> EvaluationRun:
     """Evaluate a registered model against a dataset manifest split.
 
     Records metrics with filter OFF (detector-only) in this record; a companion
     record with filter ON is produced by passing the filter config (recorded
     separately via `filter_enabled` flag per ADR-010).
+
+    `confidence_threshold` sets the OPERATING POINT: P/R/F1 are measured at that
+    threshold (AP50 stays threshold-independent). Recording it in
+    `hyperparameters` keeps two runs at different thresholds distinguishable —
+    otherwise a recall-first operating point would look like a different model.
+
+    `tta` enables test-time augmentation (multi-scale/flip averaging). It raises
+    ranking quality (AP) at ~2x inference cost, and it changes what the detector
+    actually emits, so it is part of the evaluated configuration.
     """
     import cv2
 
@@ -103,14 +141,32 @@ def evaluate_model(
             f"registered {entry.preprocess_config_ref.sha256[:12]} but file hashes {pp_hash[:12]}"
         )
 
+    detection_config = DetectionConfig()
+    if confidence_threshold is not None:
+        detection_config = DetectionConfig(
+            confidence_threshold=min(max(confidence_threshold, 0.0), 1.0),
+            iou_threshold=detection_config.iou_threshold,
+            max_detections=detection_config.max_detections,
+        )
+
     engine = SonarInferenceEngine(
         detector_kind=entry.architecture_family,
         registry=registry,
         preprocess_config=pp_cfg,
         preprocess_hash=pp_hash,
         run_filtering=False,  # detector-only metrics
+        detection_config=detection_config,
     )
     engine.load(model_version)
+    if tta:
+        # The adapter owns the ultralytics call, so TTA is switched on through the
+        # detector's own interface rather than reaching into the framework here.
+        set_tta = getattr(engine.detector, "set_tta", None)
+        if set_tta is None:
+            raise ValueError(
+                f"detector '{entry.architecture_family}' does not support TTA"
+            )
+        set_tta(True)
 
     filter_cfg_hash = None
     if filter_config_path is not None:
@@ -150,10 +206,15 @@ def evaluate_model(
     for cname in class_names:
         tp_c = 0
         fp_c = 0
+        # Use the recorded match flag rather than an IoU comparison: a matched
+        # pair always cleared the IoU threshold, and an unmatched prediction never
+        # did, so this stays correct if the threshold is ever retuned.
         for m in totals.matches:
-            if m.pred_class == cname and m.iou >= 0.5 and m.gt_class == cname:
+            if m.pred_class != cname:
+                continue
+            if m.matched and m.gt_class == cname:
                 tp_c += 1
-            elif m.pred_class == cname and m.iou < 0.5:
+            elif not m.matched:
                 fp_c += 1
         n_gt_c = sum(1 for c, _ in all_gt if c == cname)
         p_c = tp_c / (tp_c + fp_c) if (tp_c + fp_c) else 0.0
@@ -175,7 +236,7 @@ def evaluate_model(
         eval_run_id=eval_run_id or run_id_for(model_version, split),
         model_version=model_version,
         dataset_ref={
-            "path": str(dataset_manifest_path),
+            "path": portable_ref_path(dataset_manifest_path),
             "sha256": manifest_sha256(dataset_manifest_path),
         },
         split=split,  # type: ignore[arg-type]
@@ -185,14 +246,28 @@ def evaluate_model(
         filter_enabled=False,
         metrics=MetricsSummary(precision=p, recall=r, f1=f1, mAP50=map50_macro),
         per_class=per_class,
-        hyperparameters={"iou_match": 0.5},
+        hyperparameters={
+            "iou_match": 0.5,
+            "confidence_threshold": detection_config.confidence_threshold,
+            "tta": tta,
+        },
         notes=notes,
     )
     # Serialize as real JSON. (`.__str__()` produced a Python repr with single
     # quotes, so the artifact named confusion.json could not be parsed by any
     # consumer — the UI included. Values are unchanged; only the encoding is.)
     artifacts = {
-        "confusion.json": json.dumps(confusion_matrix(totals.matches, class_names), indent=2),
+        "confusion.json": json.dumps(
+            confusion_matrix(
+                totals.matches,
+                class_names,
+                # Per-class ground-truth counts let the matrix show MISSED
+                # (support - matched) instead of only the cells that happened to
+                # match, which would make the matrix look better than P/R allows.
+                gt_counts={c: sum(1 for cls, _ in all_gt if cls == c) for c in class_names},
+            ),
+            indent=2,
+        ),
     }
     store.save(run, artifacts=artifacts)
     return run

@@ -53,6 +53,6 @@
   "hyperparameters": {
     "iou_match": 0.5
   },
-  "notes": "Frozen e11 snapshot (renamed from e5_interim which had drifted), test split, filter OFF (detector-only).",
+  "notes": "Frozen e11 snapshot (renamed from e5_interim which had drifted), test split, filter OFF (detector-only). NOTE (2026-09-13): this run's confusion.json predates the fix that stopped counting unmatched predictions (false positives) on the diagonal and added the MISSED column (support - matched). Its metrics/per_class values are unaffected and remain accurate; the matrix artifact is superseded by the re-run eval_drishti-ss_yolov8n_e30_final_test_20260913_072637. Retained for audit history.",
   "timestamp": "2026-09-11T15:36:45+00:00"
 }

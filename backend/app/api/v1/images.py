@@ -17,6 +17,12 @@ def get_original_image(request: Request, image_id: str) -> Response:
     service = get_inference_service(settings)
     img = service.repo.get("sonar_images", image_id)
     if img is None:
+        all_imgs, _ = service.repo.list("sonar_images", page=1, size=500)
+        for cand in all_imgs:
+            if image_id in cand.get("source_path", "") or image_id in cand.get("image_id", ""):
+                img = cand
+                break
+    if img is None:
         raise NotFoundError(f"image '{image_id}' not found")
     from backend.app.core.security import resolve_within
 

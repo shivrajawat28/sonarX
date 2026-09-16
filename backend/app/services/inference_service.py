@@ -143,7 +143,15 @@ class InferenceService:
                 "model_version": result.model_version,
                 "preprocess_config_hash": result.preprocess_config_hash,
                 "filter_config_hash": result.filter_config_hash,
-                "overrides_applied": {"confidence_threshold": confidence_override} if confidence_override else {},
+                # Record the threshold the pipeline ACTUALLY ran at (post-floor),
+                # not merely what the request asked for.
+                "applied_confidence_threshold": payload.get("applied_confidence_threshold"),
+                "overrides_applied": (
+                    {"confidence_threshold": payload["applied_confidence_threshold"]}
+                    if payload.get("applied_confidence_threshold") is not None
+                    and payload["applied_confidence_threshold"] != self.settings.confidence_threshold
+                    else {}
+                ),
                 "detection_ids": [d["detection_id"] for d in payload["detections"]],
                 "image_ids": [image_id],
                 "timings_ms": payload["timings_ms"].model_dump() if hasattr(payload["timings_ms"], "model_dump") else payload["timings_ms"],

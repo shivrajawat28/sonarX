@@ -63,6 +63,13 @@ def export_json(
     )
 
 
+def _escape_csv(val: object) -> object:
+    """Neutralize spreadsheet formula injection (CWE-1236)."""
+    if isinstance(val, str) and val and val[0] in ("=", "+", "-", "@", "\t", "\r"):
+        return f"'{val}"
+    return val
+
+
 @router.get("/detections.csv")
 def export_csv(
     request: Request,
@@ -80,22 +87,22 @@ def export_csv(
         bbox = d.get("bbox_source_coords") or {}
         reasons = "; ".join(d.get("filter_reasons") or [])
         writer.writerow({
-            "detection_id": d.get("detection_id"),
-            "run_id": d.get("run_id"),
-            "image_id": d.get("image_id"),
-            "class_name": d.get("class_name"),
+            "detection_id": _escape_csv(d.get("detection_id")),
+            "run_id": _escape_csv(d.get("run_id")),
+            "image_id": _escape_csv(d.get("image_id")),
+            "class_name": _escape_csv(d.get("class_name")),
             "model_confidence": d.get("model_confidence"),
             "final_confidence": d.get("final_confidence"),
-            "filtering_status": d.get("filtering_status"),
-            "filter_reasons": reasons,
+            "filtering_status": _escape_csv(d.get("filtering_status")),
+            "filter_reasons": _escape_csv(reasons),
             "bbox_x": bbox.get("x"), "bbox_y": bbox.get("y"),
             "bbox_w": bbox.get("w"), "bbox_h": bbox.get("h"),
             "latitude": d.get("latitude"),
             "longitude": d.get("longitude"),
-            "geo_status": d.get("geo_status"),
-            "model_version": d.get("model_version"),
-            "preprocess_config_hash": d.get("preprocess_config_hash"),
-            "created_at": d.get("created_at"),
+            "geo_status": _escape_csv(d.get("geo_status")),
+            "model_version": _escape_csv(d.get("model_version")),
+            "preprocess_config_hash": _escape_csv(d.get("preprocess_config_hash")),
+            "created_at": _escape_csv(d.get("created_at")),
         })
     return Response(
         content=buf.getvalue(),

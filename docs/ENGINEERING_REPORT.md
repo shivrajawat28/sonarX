@@ -1,6 +1,6 @@
 # Final Engineering Report — Marine Debris Sonar AI
 
-**Date:** September 12, 2026 (final release audit appended — see §0)
+**Date:** September 13, 2026 (release audits appended — see §0 and §0.11)
 **SIH Problem Statement:** SIH26057
 
 ---
@@ -130,6 +130,106 @@ given for each.
 - **Metrics provenance:** the active model's stored test metrics were re-checked
   against the frozen weights by re-running the site-disjoint evaluation, which
   reproduced the stored numbers **exactly**.
+
+---
+
+---
+
+## 0.11 FINAL AUDIT ROUND 2 (2026-09-13) — three defects found and fixed
+
+A second release-gate pass was run against a **restarted backend on the current
+source** (the live uvicorn had been running code from before the last edits, so
+the first check was to restart it and confirm it loaded the ACTIVE model —
+`model loaded: drishti-ss_yolov8n_e30_final`). Each finding below was observed,
+fixed at the root cause, and regression-tested.
+
+### 0.11.1 CRITICAL — the confusion matrix counted false positives as correct
+
+- **Symptom (measured):** the served matrix for the ACTIVE model reported
+  `shipwreck → shipwreck = 343`, but shipwreck's own per-class metrics in the same
+  response were recall 0.398 on support 525, i.e. **209 true positives**. The
+  matrix was overstating correct shipwreck cells by 134, and undetected objects
+  (316 wrecks, 3 pipelines, 54 mines) appeared nowhere at all.
+- **Root cause:** `match_detections` records a false positive as
+  `MatchedPair(pred_class, pred_class, iou, score)` — the *same* shape as a true
+  positive — and `confusion_matrix` incremented `matrix[gt][pred]` for every pair,
+  so every unmatched prediction landed on the diagonal. The docstring asserted
+  this behaviour was intended ("including unmatched preds as class->same"), which
+  is why it had never been questioned.
+- **Fix:** `MatchedPair` gained a `matched` flag (`False` for unmatched
+  predictions). `confusion_matrix` attributes those to a **background** row and,
+  when per-class ground-truth counts are supplied, adds a **missed** column
+  (support − matched). `evaluate.py` passes those counts and now derives per-class
+  TP/FP from the flag rather than from an IoU comparison.
+- **Verified:** the eval pipeline was re-run on the frozen `best_final.pt` (test
+  split, 700 images) and reproduced the documented headline metrics **exactly**
+  (P 0.758 / R 0.586 / F1 0.661 and every per-class P/R/F1/AP50/support). The new
+  matrix is internally consistent for the first time: every class row sums to its
+  support (209 + 316 = 525 → recall 0.398) and the background row totals 169 false
+  positives (528 / (528 + 169) = 0.758 precision). Regression test:
+  `test_false_positive_never_counts_as_a_correct_cell`, plus missed-column and
+  no-fabricated-zero cases.
+- **Impact:** no previously published metric changed (they are computed from
+  counts, not from the matrix). The dashboard display did — it had been
+  overstating correctness. The nine pre-fix runs kept on disk are annotated in
+  their `record.json`, naming the superseding run.
+
+### 0.11.2 EvaluationRun records leaked an absolute machine path
+
+- `dataset_ref.path` was written verbatim from the CLI argument, so the ACTIVE
+  model's Git-tracked record stored `C:/Users/<user>/OneDrive/.../drishti-sss.json`.
+  This is the same defect class fixed for the registry in §0.5 — it leaks the local
+  filesystem layout and dangles once the repo is cloned or moved (and it was
+  visible in the Models page provenance block).
+- **Fix:** new `portable_ref_path()` in `evaluate.py` stores repo-relative paths,
+  with the same longest-suffix recovery `resolve_repo_path` uses for stale
+  absolute paths, and leaves genuinely external paths untouched rather than
+  rewriting them. The five stored records were normalised in place with each
+  `sha256` re-verified unchanged. Regression tests cover relative, in-repo
+  absolute, foreign-checkout absolute, and outside-repo paths.
+- **Verified:** `GET /models/drishti-ss_yolov8n_e30_final/metrics` now reports
+  `dataset_ref.path = datasets/manifests/drishti-sss.json` with the identical hash.
+
+### 0.11.3 New operating-point control had no browser coverage
+
+- The serving-threshold selector (added with the operating-point work) was exercised
+  only by unit tests. A control that silently does nothing would look fine in a
+  screenshot while being dishonest in a demo, so it is now asserted end-to-end.
+- **Fix/verified:** `frontend/e2e_full.mjs` gained five assertions — the control
+  exists, the chosen value reaches the API as an override, the API echoes the
+  **applied** (post-floor) threshold, the UI displays the threshold that actually
+  ran, and the default is restored afterwards. Measured in a real browser:
+  `sent={"confidence_threshold":0.05}` → `applied=0.05` → UI `threshold 0.05`,
+  then back to `applied=0.25`.
+
+### 0.11.4 Reports did not record which threshold produced the detections
+
+- The report's provenance block carried model / preprocessing / filter hashes but
+  not the **detector operating point** — and that is now a user-selectable value,
+  so a report generated at 0.05 (recall-first) was indistinguishable from one at
+  0.25 (balanced) apart from its detection count.
+- **Fix:** the report job reads `applied_confidence_threshold` back from the
+  detection runs that produced the rows (never from the request) and renders it in
+  both the HTML and PDF artifacts: `Detector confidence threshold: 0.05`.
+- **Verified end-to-end:** a run executed with an explicit 0.05 override produced
+  `stored run applied threshold: 0.05 | overrides_applied: {'confidence_threshold': 0.05}`,
+  and the downloaded report's meta line reads `Detector confidence threshold: 0.05`.
+  Asserted in the browser E2E from the artifact itself.
+
+### 0.11.5 Verified as already correct (no change made)
+
+- **Error handling:** 15 malformed/hostile requests (EXE upload, text-as-PNG, empty
+  file, unknown image/model/report/job/survey ids, malformed body, negative page
+  size, out-of-bounds threshold overrides, two path-traversal attempts) all return
+  the correct 4xx — no 500s, no crashes, no traversal.
+- **Dataset claims:** independently re-measured — train 3,875 images / 4,297
+  instances, val 630 / 904, test 700 / 901, per-class counts, and the mixed tile
+  sizes (27 distinct shapes in test alone) all match `docs/DATASET_AUDIT.md`.
+- **Registry integrity:** exactly one `active` entry (`drishti-ss_yolov8n_e30_final`),
+  all others `retired`; every checkpoint path resolves; the stale
+  `scripts/.training.lock` is harmless (`_pid_alive` refuses only live PIDs).
+- **Secrets:** nothing sensitive is tracked — `.env*` is ignored and no keys,
+  tokens or credentials appear in tracked files.
 
 ---
 
@@ -297,12 +397,15 @@ PYTHONPATH="ml;." .venv/Scripts/python -m ml.scripts.evaluate --model <version> 
 ## 18. TEST RESULTS (all executed this session)
 
 ```
-pytest ml/tests backend/tests : 157/157 passed ✅  (143 + 14 new regression tests)
+pytest ml/tests backend/tests : 173/173 passed ✅  (incl. all regression tests;
+  round 2 on 2026-09-13 added portable-ref-path + confusion-matrix cases)
   (ml/tests + backend/tests, incl. boundary/architecture lint)
 frontend npx tsc --noEmit    : clean ✅
 frontend npm run build       : succeeds ✅
 Browser E2E (Playwright + system Chrome, node frontend/e2e_full.mjs):
-  37/37 checks PASSED ✅ — health/loaded model, upload, preprocessing preview,
+  51/51 checks PASSED ✅ — health/loaded model, upload, preprocessing preview,
+  (round 2 added: operating-point control present, override sent, applied
+  threshold echoed, UI shows the threshold that ran, default restored),
   real inference by the active model, detection count parity, filter status +
   reasons visible, model-vs-final confidence, honest geo notice, overlay
   coordinate-space match (worst |Δ| 0.00 px), boxes inside the image,

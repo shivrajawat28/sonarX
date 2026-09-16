@@ -6,5 +6,7 @@
 frontend/node_modules
 frontend/dist
 data
-models/weights
+models/weights/*
+!models/weights/drishti-ss_yolov8n_e30
+!models/weights/drishti-ss_yolov8n_e30/**
 docs

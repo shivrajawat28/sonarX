@@ -165,6 +165,61 @@ if (expected.length > 0) {
   );
 }
 
+// ------------------------------------- 6b. detector operating-point control
+// The threshold select is a real user control, not decoration: the chosen value
+// must reach the API as an override, the API's post-floor applied value must come
+// back, and the UI must show what actually ran. Covered here because a control
+// that silently does nothing would look fine in a screenshot but be dishonest in
+// a demo.
+const thrSelect = page.locator("select").first();
+const thrCount = await thrSelect.count();
+note(thrCount > 0, "detector threshold control is present");
+if (thrCount > 0) {
+  await thrSelect.selectOption("0.05");
+  const [lowResp] = await Promise.all([
+    page.waitForResponse(
+      (r) => r.url().includes("/detections/run") && r.request().method() === "POST",
+      { timeout: 180000 }
+    ),
+    page.getByRole("button", { name: /run detection/i }).click(),
+  ]);
+  const sent = JSON.parse(lowResp.request().postData() || "{}");
+  const lowJson = await lowResp.json();
+  note(
+    sent?.overrides?.confidence_threshold === 0.05,
+    "lower threshold is sent as a detector override",
+    `sent=${JSON.stringify(sent.overrides ?? null)}`
+  );
+  note(
+    lowJson.applied_confidence_threshold === 0.05,
+    "API reports the applied operating point",
+    `applied=${lowJson.applied_confidence_threshold}`
+  );
+  for (let i = 0; i < 12; i++) {
+    if (/Detections \(\d+\)/.test(await page.locator("body").innerText())) break;
+    await page.waitForTimeout(2000);
+  }
+  note(
+    /threshold 0\.05/.test(await page.locator("body").innerText()),
+    "UI shows the threshold that actually ran"
+  );
+  // Restore the shipped default so the remaining flow (and stored state) uses it.
+  await thrSelect.selectOption("0.25");
+  const [defResp] = await Promise.all([
+    page.waitForResponse(
+      (r) => r.url().includes("/detections/run") && r.request().method() === "POST",
+      { timeout: 180000 }
+    ),
+    page.getByRole("button", { name: /run detection/i }).click(),
+  ]);
+  const defJson = await defResp.json();
+  note(
+    defJson.applied_confidence_threshold === 0.25,
+    "default operating point restored and reported",
+    `applied=${defJson.applied_confidence_threshold}`
+  );
+}
+
 // ------------------------------------------------------------- 7. map/geo
 note(
   /No geolocated detections|geolocated/.test(await page.locator("body").innerText()),
@@ -216,6 +271,12 @@ if ((await genBtn.count()) > 0) {
         note(/bbox|x,y,w,h/i.test(html), "HTML report includes bounding boxes");
         note(/Model conf/i.test(html) && /Final conf/i.test(html), "HTML report includes both confidences");
         note(/Filter reason|Reasons/i.test(html), "HTML report includes filter reasons");
+        // The operating point is user-selectable, so the report must state the
+        // threshold the detections were produced at, not just the model version.
+        note(
+          /Detector confidence threshold:\s*0\.\d+/.test(html),
+          "HTML report records the detector confidence threshold"
+        );
       }
     }
   }
@@ -223,7 +284,20 @@ if ((await genBtn.count()) > 0) {
   note(false, "Generate report button present");
 }
 
-await page.screenshot({ path: path.join(ROOT, "e2e/e2e_workbench.png"), fullPage: true });
+async function safeScreenshot(filePath, fullPage = true) {
+  try {
+    await page.screenshot({ path: filePath, fullPage });
+  } catch (err) {
+    try {
+      await new Promise((r) => setTimeout(r, 400));
+      await page.screenshot({ path: filePath, fullPage });
+    } catch (e2) {
+      console.warn(`[warn] Screenshot write skipped (${path.basename(filePath)}): ${e2.message}`);
+    }
+  }
+}
+
+await safeScreenshot(path.join(ROOT, "e2e/e2e_workbench.png"), true);
 
 // ------------------------------------------------------- 10. other pages
 await page.goto(`${BASE}/models`, { waitUntil: "networkidle" });
@@ -232,11 +306,11 @@ note(/Evaluation metrics/.test(modelsBody), "models page renders metrics");
 note(/Split: TEST/i.test(modelsBody), "metrics are labelled with the evaluation split");
 note(/Confusion matrix/i.test(modelsBody), "confusion matrix is displayed");
 note(/training provenance/i.test(modelsBody), "model/training provenance is displayed");
-await page.screenshot({ path: path.join(ROOT, "e2e/e2e_models.png"), fullPage: true });
+await safeScreenshot(path.join(ROOT, "e2e/e2e_models.png"), true);
 
 await page.goto(`${BASE}/history`, { waitUntil: "networkidle" });
 note(/Detection history/.test(await page.locator("body").innerText()), "history page renders");
-await page.screenshot({ path: path.join(ROOT, "e2e/e2e_history.png"), fullPage: true });
+await safeScreenshot(path.join(ROOT, "e2e/e2e_history.png"), true);
 
 // --------------------------- 12. survey batch + geolocation (real nav path)
 const FIXTURE = path.join(ROOT, "e2e/fixtures/geo_survey_demo.zip");
@@ -275,7 +349,7 @@ if (fs.existsSync(FIXTURE)) {
     const rows = (await resp.text()).split("\n").filter((l) => l.trim()).length - 1;
     note(resp.status() === 200 && rows > 0, "survey-scoped CSV export downloads", `${rows} rows`);
   }
-  await page.screenshot({ path: path.join(ROOT, "e2e/e2e_survey.png"), fullPage: true });
+  await safeScreenshot(path.join(ROOT, "e2e/e2e_survey.png"), true);
 } else {
   note(false, "survey fixture present (run scripts/make_e2e_survey_fixture.py)");
 }

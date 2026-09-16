@@ -6,7 +6,15 @@
  * geolocation value is computed server-side and merely displayed.
  */
 
-const BASE = "/api/v1";
+const rawBase = (import.meta.env.VITE_API_BASE_URL ?? "").trim();
+const API_BASE = !rawBase || rawBase.startsWith("http://") || rawBase.startsWith("https://")
+  ? rawBase.replace(/\/+$/, "")
+  : `https://${rawBase.replace(/\/+$/, "")}`;
+const BASE = `${API_BASE}/api/v1`;
+
+export const getApiBase = () => API_BASE;
+export const imageUrl = (imageId: string, processed = false) =>
+  `${BASE}/images/${encodeURIComponent(imageId)}${processed ? "/processed" : ""}`;
 
 export class ApiError extends Error {
   code: string;
@@ -227,6 +235,9 @@ export interface InferenceResult {
   model_version: string;
   preprocess_config_hash: string;
   filter_config_hash: string;
+  /** Threshold the pipeline actually ran at (post backend floor) — not merely
+   * the requested value. Null when the backend did not report one. */
+  applied_confidence_threshold?: number | null;
   detections: Detection[];
   timings_ms: Record<string, number>;
   warnings: string[];
@@ -234,8 +245,25 @@ export interface InferenceResult {
   processed_image_ref?: string | null;
 }
 
-export const runDetection = (imageId: string, save = true) =>
-  post<InferenceResult>("/detections/run", { image_id: imageId, save });
+/**
+ * Run detection.
+ *
+ * `confidenceThreshold` is the detector OPERATING POINT: lowering it surfaces
+ * more candidates (higher recall, lower precision) instead of missing them.
+ * The backend bounds it (floor `MIN_CONFIDENCE_OVERRIDE`) and records the
+ * override with the run; filtering still annotates every extra candidate.
+ */
+export const runDetection = (
+  imageId: string,
+  save = true,
+  confidenceThreshold?: number
+) =>
+  post<InferenceResult>("/detections/run", {
+    image_id: imageId,
+    save,
+    overrides:
+      confidenceThreshold != null ? { confidence_threshold: confidenceThreshold } : undefined,
+  });
 
 /**
  * Coordinate space of the image currently on screen.

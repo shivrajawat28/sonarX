@@ -117,12 +117,20 @@ class SonarInferenceEngine:
                 source, self.preprocess_config, self.preprocess_hash, image_id
             )
 
+        # ONE effective config for the whole run. A per-request override must
+        # govern BOTH the detector and post-processing: the detector surfaces the
+        # extra candidates, and the post-processor thresholds the SAME way. Passing
+        # `self.detection_config` to the post-processor would re-apply the default
+        # threshold and silently discard every candidate the override recovered,
+        # making the override a no-op.
+        effective = (params or PredictParams()).resolve(self.detection_config)
+
         with tracer.stage("inference_ms"):
             raw = self.detector.predict(processed_meta, processed_arr, params, self.detection_config)
 
         with tracer.stage("postprocess_ms"):
             post = self.post.process(
-                raw, processed_meta, self._meta, self.detection_config,
+                raw, processed_meta, self._meta, effective,
                 filter_config_hash=self.filter_config_hash,
             )
             detections: list[Detection] = post.detections
@@ -161,6 +169,12 @@ class SonarInferenceEngine:
             preprocess_config_hash=self.preprocess_hash,
             preprocess_config_name=self.preprocess_config.name,
             filter_config_hash=self.filter_config_hash,
+            overrides_applied=(
+                {"confidence_threshold": effective.confidence_threshold}
+                if params is not None and params.confidence_threshold is not None
+                else {}
+            ),
+            applied_confidence_threshold=effective.confidence_threshold,
             detections=detections,
             timings_ms=tracer.timings,
             warnings=warnings,
@@ -184,12 +198,11 @@ class SonarInferenceEngine:
 
 def _as_gray_float(pixels: np.ndarray) -> np.ndarray:
     arr = np.asarray(pixels)
-    if arr.ndim == 3 and arr.shape[2] == 3:
-        arr = arr[:, :, 0]  # channels identical for sonar; take one
-    if arr.ndim == 3 and arr.shape[2] == 1:
-        arr = arr[:, :, 0]
+    if arr.ndim == 3:
+        arr = arr[:, :, 0]  # take first channel (for grayscale/sonar, channels are identical; strips alpha if RGBA)
     if arr.dtype == np.uint8:
         arr = arr.astype(np.float32) / 255.0
     else:
         arr = np.clip(arr.astype(np.float32), 0.0, 1.0)
     return arr
+

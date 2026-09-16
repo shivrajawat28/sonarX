@@ -11,12 +11,23 @@ from mlpipeline.datatypes.detection import BBox
 from mlpipeline.postprocessing.nms import iou as box_iou
 
 
+# Row/column labels for the confusion matrix. Kept here so producers and the
+# dashboard agree on the spelling.
+BACKGROUND = "background"  # row: predictions that matched no ground-truth object
+MISSED = "missed"  # column: ground-truth objects the model did not detect
+
+
 @dataclass
 class MatchedPair:
     gt_class: str
     pred_class: str
     iou: float
     score: float
+    # False for a prediction that claimed no ground-truth box (a false positive).
+    # Without this flag an unmatched prediction is indistinguishable from a
+    # correct one once it is in the matrix, which is how false positives used to
+    # be counted as correct classifications.
+    matched: bool = True
 
 
 @dataclass
@@ -50,7 +61,7 @@ def match_detections(
             counts.matches.append(MatchedPair(gt[best][0], pcls, best_iou, score))
         else:
             counts.fp += 1
-            counts.matches.append(MatchedPair(pcls, pcls, best_iou, score))
+            counts.matches.append(MatchedPair(pcls, pcls, best_iou, score, matched=False))
     counts.fn = len(gt) - len(used)
     return counts
 
@@ -115,11 +126,33 @@ def np_cumsum(xs: list[int]) -> list[int]:
     return out
 
 
-def confusion_matrix(matches: list[MatchedPair], class_names: list[str]) -> dict[str, dict[str, int]]:
-    """rows = truth, cols = prediction (including unmatched preds as class->same)."""
+def confusion_matrix(
+    matches: list[MatchedPair],
+    class_names: list[str],
+    gt_counts: dict[str, int] | None = None,
+) -> dict[str, dict[str, int]]:
+    """Detection confusion matrix.
+
+    rows  = ground truth, plus a BACKGROUND row for predictions that matched no
+            object (a false positive is never a "correct" cell).
+    cols  = predicted class, plus a MISSED column for ground-truth objects the
+            model failed to detect (populated when `gt_counts` is supplied).
+
+    `gt_counts` holds per-class ground-truth instance counts, so the MISSED
+    column can be derived as support - matched. Omit it (e.g. in unit tests) and
+    the MISSED column is absent entirely rather than reported as a false zero.
+    """
     names = list(class_names)
-    matrix = {t: {p: 0 for p in names} for t in names}
+    cols = [*names, MISSED] if gt_counts is not None else list(names)
+    matrix = {t: {p: 0 for p in cols} for t in [*names, BACKGROUND]}
     for m in matches:
-        if m.gt_class in matrix and m.pred_class in names:
-            matrix[m.gt_class][m.pred_class] += 1
+        if m.matched:
+            if m.gt_class in matrix and m.pred_class in cols:
+                matrix[m.gt_class][m.pred_class] += 1
+        elif m.pred_class in cols:
+            matrix[BACKGROUND][m.pred_class] += 1
+    if gt_counts is not None:
+        for t in names:
+            matched = sum(matrix[t][p] for p in names)
+            matrix[t][MISSED] = max(0, int(gt_counts.get(t, 0)) - matched)
     return matrix

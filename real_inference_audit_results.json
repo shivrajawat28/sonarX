@@ -1,0 +1,170 @@
+{
+  "imagesTested": [
+    {
+      "name": "pipe_1693569383.780_x3500.jpg",
+      "detectionCount": 1,
+      "classes": [
+        "submarine_pipeline"
+      ],
+      "highestRawConf": 0.6525540351867676,
+      "avgRawConf": 0.6525540351867676,
+      "highestFinalConf": 0.6525540351867676,
+      "accepted": 1,
+      "flagged": 0,
+      "rejected": 0,
+      "rawDetails": [
+        {
+          "detection_id": "det_be708f7fcfaa4380bbbc",
+          "run_id": "run_f1531fd13eb2477d8c38",
+          "image_id": "img_71a61e8e1aa0d007_a3260bde",
+          "class_name": "submarine_pipeline",
+          "model_confidence": 0.6525540351867676,
+          "final_confidence": 0.6525540351867676,
+          "filtering_status": "accepted",
+          "filter_reasons": [],
+          "bbox_source_coords": {
+            "x": 170.1465606689453,
+            "y": 2.415283203125,
+            "w": 347.83970642089844,
+            "h": 248.13638305664062
+          },
+          "bbox_processed_coords": {
+            "x": 170.1465606689453,
+            "y": 72.415283203125,
+            "w": 347.83970642089844,
+            "h": 248.13638305664062
+          },
+          "mask": null,
+          "latitude": null,
+          "longitude": null,
+          "geo_status": "unavailable",
+          "geo_provenance": {
+            "method": null,
+            "samples_used": [],
+            "uncertainty_m": null,
+            "reason": "no navigation data available for this source"
+          },
+          "model_version": "drishti-ss_yolov8n_e30_final",
+          "preprocess_config_hash": "2dffbb41abb4bc9c0db24f888f7c3d183e1db03274f14d06d231595d7b57df59",
+          "filter_config_hash": "b7b029d6a12551db90c30ccba7ca0885bbf3957c852fb4787b4dcb90e50d2253",
+          "created_at": "2026-09-14T11:41:13+00:00"
+        }
+      ]
+    },
+    {
+      "name": "wreckA_Artificial_Reef_06_y1280_x0.jpg",
+      "detectionCount": 2,
+      "classes": [
+        "shipwreck",
+        "shipwreck"
+      ],
+      "highestRawConf": 0.8469014763832092,
+      "avgRawConf": 0.7485577166080475,
+      "highestFinalConf": 0.6502139568328857,
+      "accepted": 1,
+      "flagged": 1,
+      "rejected": 0,
+      "rawDetails": [
+        {
+          "detection_id": "det_feef41e324fe4c56991e",
+          "run_id": "run_11c0283d8d554e8a8a11",
+          "image_id": "img_41a6e90f3316da20_d4aa5ed2",
+          "class_name": "shipwreck",
+          "model_confidence": 0.8469014763832092,
+          "final_confidence": 0.5469014763832092,
+          "filtering_status": "flagged",
+          "filter_reasons": [
+            "edge_clip: box touches image border (tol 2.0px)"
+          ],
+          "bbox_source_coords": {
+            "x": 477.15087890625,
+            "y": 12.777069091796875,
+            "w": 162.84912109375,
+            "h": 139.19786071777344
+          },
+          "bbox_processed_coords": {
+            "x": 477.15087890625,
+            "y": 12.777069091796875,
+            "w": 162.84912109375,
+            "h": 139.19786071777344
+          },
+          "mask": null,
+          "latitude": null,
+          "longitude": null,
+          "geo_status": "unavailable",
+          "geo_provenance": {
+            "method": null,
+            "samples_used": [],
+            "uncertainty_m": null,
+            "reason": "no navigation data available for this source"
+          },
+          "model_version": "drishti-ss_yolov8n_e30_final",
+          "preprocess_config_hash": "2dffbb41abb4bc9c0db24f888f7c3d183e1db03274f14d06d231595d7b57df59",
+          "filter_config_hash": "b7b029d6a12551db90c30ccba7ca0885bbf3957c852fb4787b4dcb90e50d2253",
+          "created_at": "2026-09-14T11:41:19+00:00"
+        },
+        {
+          "detection_id": "det_e18de83dd2e74bb39a46",
+          "run_id": "run_11c0283d8d554e8a8a11",
+          "image_id": "img_41a6e90f3316da20_d4aa5ed2",
+          "class_name": "shipwreck",
+          "model_confidence": 0.6502139568328857,
+          "final_confidence": 0.6502139568328857,
+          "filtering_status": "accepted",
+          "filter_reasons": [],
+          "bbox_source_coords": {
+            "x": 553.6866455078125,
+            "y": 611.8583984375,
+            "w": 54.822265625,
+            "h": 25.8807373046875
+          },
+          "bbox_processed_coords": {
+            "x": 553.6866455078125,
+            "y": 611.8583984375,
+            "w": 54.822265625,
+            "h": 25.8807373046875
+          },
+          "mask": null,
+          "latitude": null,
+          "longitude": null,
+          "geo_status": "unavailable",
+          "geo_provenance": {
+            "method": null,
+            "samples_used": [],
+            "uncertainty_m": null,
+            "reason": "no navigation data available for this source"
+          },
+          "model_version": "drishti-ss_yolov8n_e30_final",
+          "preprocess_config_hash": "2dffbb41abb4bc9c0db24f888f7c3d183e1db03274f14d06d231595d7b57df59",
+          "filter_config_hash": "b7b029d6a12551db90c30ccba7ca0885bbf3957c852fb4787b4dcb90e50d2253",
+          "created_at": "2026-09-14T11:41:19+00:00"
+        }
+      ]
+    },
+    {
+      "name": "bg_1693569262.760_x0.jpg",
+      "detectionCount": 0,
+      "classes": [],
+      "highestRawConf": 0,
+      "avgRawConf": 0,
+      "highestFinalConf": 0,
+      "accepted": 0,
+      "flagged": 0,
+      "rejected": 0,
+      "rawDetails": []
+    }
+  ],
+  "repeatabilityPassed": true,
+  "boxErrors": {
+    "maxXError": 0,
+    "maxYError": 0,
+    "maxWError": 0,
+    "maxHError": 0
+  },
+  "exportsVerified": {
+    "json": true,
+    "csv": true,
+    "html": true,
+    "pdf": true
+  }
+}
